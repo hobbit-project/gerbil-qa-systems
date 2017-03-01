@@ -1,0 +1,89 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix hobbit: <http://w3id.org/hobbit/vocab#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix annoName: <http://w3id.org/gerbil/hobbit/vocab#> .
+@prefix gerbilQA: <http://w3id.org/gerbilQA/hobbit/vocab#> .
+@prefix gerbil: <http://w3id.org/gerbil/vocab#> .
+
+gerbil:ExperimentTypes    a owl:Class .
+gerbil:A2KB a gerbil:ExperimentTypes .
+gerbil:C2KB a gerbil:ExperimentTypes .
+gerbil:D2KB a gerbil:ExperimentTypes .
+gerbil:OKE2015_Task1 a gerbil:ExperimentTypes .
+gerbil:OKE2015_Task2 a gerbil:ExperimentTypes .
+gerbil:ERec a gerbil:ExperimentTypes .
+gerbil:ETyping a gerbil:ExperimentTypes .
+gerbil:QA a gerbil:ExperimentTypes .
+
+
+
+<http://www.example.org/exampleSystem/System> a hobbit:System ;
+    rdfs:label "Generic GERBIL Webservice Adapter"@en;
+	rdfs:comment "Ported trom the GERBIL Project"@en;
+	hobbit:hasParameter annoName:annotatorName .
+
+   
+annoName:annotatorName a hobbit:Parameter ;
+    rdfs:label "Annotator Name"@en ;
+    rdfs:comment "Selects the Annotator from GERBIL."@en ;
+    rdfs:range  xsd:string .
+	
+annoName:applicableTo a hobbit:Parameter ;
+    rdfs:label "Fitting experiment type"@en ;
+    rdfs:comment "This Annotator is applicable to experiment type."@en ;
+    rdfs:range  gerbil:ExperimentTypes .
+
+gerbilQA:HAWK a  hobbit:SystemInstance; 
+    rdfs:label  "HAWK (WS)"@en;
+    rdfs:comment    "Hybrid question answering using Linked Data"@en;
+    hobbit:imageName "git.project-hobbit.eu:4567/maxpower/mysystem";
+    hobbit:implementsApi <http://benchmark.org/MyNewBenchmark/BenchmarkApi> ;
+    hobbit:instanceOf <http://www.example.org/exampleSystem/System> ;
+	annoName:annotatorName "HAWK" ;
+	annoName:applicableTo gerbil:QA .
+	
+gerbilQA:QAKIS a  hobbit:SystemInstance; 
+    rdfs:label  "QAKIS (WS)"@en;
+    rdfs:comment    "QA over structured Knowledge Bases (e.g. DBpedia)"@en;
+    hobbit:imageName "git.project-hobbit.eu:4567/maxpower/mysystem";
+    hobbit:implementsApi <http://benchmark.org/MyNewBenchmark/BenchmarkApi> ;
+    hobbit:instanceOf <http://www.example.org/exampleSystem/System> ;
+	annoName:annotatorName "QAKIS" ;
+	annoName:applicableTo gerbil:QA .
+	
+gerbilQA:SINA a  hobbit:SystemInstance; 
+    rdfs:label  "SINA (WS)"@en;
+    rdfs:comment    "Semantically Interpreting user query towards QA"@en;
+    hobbit:imageName "git.project-hobbit.eu:4567/maxpower/mysystem";
+    hobbit:implementsApi <http://benchmark.org/MyNewBenchmark/BenchmarkApi> ;
+    hobbit:instanceOf <http://www.example.org/exampleSystem/System> ;
+	annoName:annotatorName "SINA" ;
+	annoName:applicableTo gerbil:QA .
+	
+gerbilQA:YODA a  hobbit:SystemInstance; 
+    rdfs:label  "YODA (WS)"@en;
+    rdfs:comment    "Yet another deep answering pipeline"@en;
+    hobbit:imageName "git.project-hobbit.eu:4567/maxpower/mysystem";
+    hobbit:implementsApi <http://benchmark.org/MyNewBenchmark/BenchmarkApi> ;
+    hobbit:instanceOf <http://www.example.org/exampleSystem/System> ;
+	annoName:annotatorName "YODA" ;
+	annoName:applicableTo gerbil:QA .
+	
+gerbilQA:QANARY a  hobbit:SystemInstance; 
+    rdfs:label  "QANARY (WS)"@en;
+    rdfs:comment    "Methodology to create, share and use components for QA"@en;
+    hobbit:imageName "git.project-hobbit.eu:4567/maxpower/mysystem";
+    hobbit:implementsApi <http://benchmark.org/MyNewBenchmark/BenchmarkApi> ;
+    hobbit:instanceOf <http://www.example.org/exampleSystem/System> ;
+	annoName:annotatorName "QANARY" ;
+	annoName:applicableTo gerbil:QA .
+	
+gerbilQA:OKBQA a  hobbit:SystemInstance; 
+    rdfs:label  "OKBQA (WS)"@en;
+    rdfs:comment    "Open Knowledge Base and Question-Answering"@en;
+    hobbit:imageName "git.project-hobbit.eu:4567/maxpower/mysystem";
+    hobbit:implementsApi <http://benchmark.org/MyNewBenchmark/BenchmarkApi> ;
+    hobbit:instanceOf <http://www.example.org/exampleSystem/System> ;
+	annoName:annotatorName "OKBQA" ;
+	annoName:applicableTo gerbil:QA .
+   
