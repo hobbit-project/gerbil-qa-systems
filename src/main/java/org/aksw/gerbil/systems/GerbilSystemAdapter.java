@@ -35,7 +35,6 @@ public class GerbilSystemAdapter extends AbstractSystemAdapter {
 	public GerbilSystemAdapter() {
 		parser = new TurtleNIFParser();
 		writer = new TurtleNIFWriter();
-
 	}
 
 	@Override
@@ -47,12 +46,9 @@ public class GerbilSystemAdapter extends AbstractSystemAdapter {
 		List<Resource> rdfSystemInstanceSubjectList = RdfHelper.getSubjectResources(this.systemParamModel, RDF.type, HOBBIT.SystemInstance);
 
 		if (rdfSystemInstanceSubjectList.size() == 0) {
-			LOGGER.error("Couldn't find a SystemInstance defined in sytem metadata file");
-			this.close();
-			return;
-
+			throw new Exception("Couldn't find a SystemInstance defined in sytem metadata file");	
 		} else if (rdfSystemInstanceSubjectList.size() > 0) {
-			LOGGER.warn("More than one SystemInstance defined in sytem metadata file - proceeding with first occurrence");
+			throw new Exception("More than one SystemInstance defined in sytem metadata file - proceeding with first occurrence");
 		}
 
 		Literal annotatorNameLiteral = RdfHelper.getLiteral(systemParamModel, rdfSystemInstanceSubjectList.get(0), ANNOTATOR_NAME_PROPERTY);
@@ -74,9 +70,7 @@ public class GerbilSystemAdapter extends AbstractSystemAdapter {
 		}
 
 		if (adapterConfigWithFittingAnnotatorName == null) {
-			LOGGER.error("Could'nt find a GERBIL QASystem annotator with name: |" + annotatorNameLiteral.getString() + "|");
-			this.close();
-			return;
+			throw new Exception("Could'nt find a GERBIL QASystem annotator with name: |" + annotatorNameLiteral.getString() + "|");
 		}
 		/**
 		 * Retrieve annotator.
@@ -90,7 +84,6 @@ public class GerbilSystemAdapter extends AbstractSystemAdapter {
 	}
 
 	public void receiveGeneratedTask(String taskIdString, byte[] data) {
-
 		List<Document> documents = parser.parseNIF(RabbitMQUtils.readString(data));
 		try {
 			documents.get(0).setMarkings(qasystem.answerQuestion(documents.get(0)));
