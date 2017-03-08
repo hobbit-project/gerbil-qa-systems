@@ -2,14 +2,23 @@ package org.aksw.gerbil.systems;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Vector;
 
+import org.aksw.gerbil.annotator.A2KBAnnotator;
+import org.aksw.gerbil.annotator.Annotator;
 import org.aksw.gerbil.annotator.AnnotatorConfiguration;
+import org.aksw.gerbil.annotator.C2KBAnnotator;
+import org.aksw.gerbil.annotator.D2KBAnnotator;
+import org.aksw.gerbil.annotator.EntityRecognizer;
+import org.aksw.gerbil.annotator.EntityTyper;
+import org.aksw.gerbil.annotator.OKETask1Annotator;
+import org.aksw.gerbil.annotator.OKETask2Annotator;
 import org.aksw.gerbil.annotator.QASystem;
 import org.aksw.gerbil.datatypes.ExperimentType;
-import org.aksw.gerbil.exceptions.GerbilException;
 import org.aksw.gerbil.io.nif.impl.TurtleNIFParser;
 import org.aksw.gerbil.io.nif.impl.TurtleNIFWriter;
 import org.aksw.gerbil.transfer.nif.Document;
+import org.aksw.gerbil.transfer.nif.Marking;
 import org.aksw.gerbil.web.config.AdapterList;
 import org.aksw.gerbil.web.config.AnnotatorsConfig;
 import org.apache.jena.rdf.model.Literal;
@@ -27,8 +36,10 @@ import org.slf4j.LoggerFactory;
 public class GerbilSystemAdapter extends AbstractSystemAdapter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(GerbilSystemAdapter.class);
 	public static final Property ANNOTATOR_NAME_PROPERTY = ResourceFactory.createProperty("http://w3id.org/gerbil/hobbit/vocab#annotatorName");
+	public static final Property ANNOTATOR_EXPERIMENT_TYPE_PROPERTY = ResourceFactory.createProperty("http://w3id.org/gerbil/hobbit/vocab#annotatorExperimentType");
 
-	private QASystem qasystem;
+	private Annotator annotator;
+	private ExperimentType experimentType;
 	private TurtleNIFParser parser;
 	private TurtleNIFWriter writer;
 
@@ -46,23 +57,38 @@ public class GerbilSystemAdapter extends AbstractSystemAdapter {
 		List<Resource> rdfSystemInstanceSubjectList = RdfHelper.getSubjectResources(this.systemParamModel, RDF.type, HOBBIT.SystemInstance);
 
 		if (rdfSystemInstanceSubjectList.size() == 0) {
-			throw new Exception("Couldn't find a SystemInstance defined in sytem metadata file");	
+			throw new Exception("Couldn't find a SystemInstance defined in sytem metadata file");
 		} else if (rdfSystemInstanceSubjectList.size() > 0) {
-			throw new Exception("More than one SystemInstance defined in sytem metadata file - proceeding with first occurrence");
+			throw new Exception("More than one SystemInstance defined in sytem metadata file");
 		}
 
 		Literal annotatorNameLiteral = RdfHelper.getLiteral(systemParamModel, rdfSystemInstanceSubjectList.get(0), ANNOTATOR_NAME_PROPERTY);
+		Literal annotatorExperimentType = RdfHelper.getLiteral(systemParamModel, rdfSystemInstanceSubjectList.get(0), ANNOTATOR_EXPERIMENT_TYPE_PROPERTY);
+		if (annotatorExperimentType == null) {
+			throw new Exception("No experiment type defiend for annotator |" + annotatorNameLiteral.toString());
+		}
+
+		try {
+			/**
+			 * Discard any number representation which can be interpreted as
+			 * year
+			 */
+			String annotatorExperimentTypeStr = annotatorExperimentType.toString().replaceAll("[^0-9]+|^)[1,2]{1}[0-9]{3}([^0-9]+|$)", "$1$2");
+			experimentType = ExperimentType.valueOf(annotatorExperimentTypeStr.trim());
+		} catch (Exception e) {
+			throw new Exception("Cannot find an ExperimentType enum for input |" + annotatorExperimentType.toString());
+		}
 
 		/**
 		 * Get annotators from GERBIL and find the one with matching name
 		 */
 		AdapterList<AnnotatorConfiguration> adapterList = AnnotatorsConfig.annotators();
 
-		List<AnnotatorConfiguration> adapterConfigForQAList = adapterList.getAdaptersForExperiment(ExperimentType.QA);
+		List<AnnotatorConfiguration> adapterConfigForExpTypeList = adapterList.getAdaptersForExperiment(experimentType);
 
 		AnnotatorConfiguration adapterConfigWithFittingAnnotatorName = null;
 
-		for (AnnotatorConfiguration it : adapterConfigForQAList) {
+		for (AnnotatorConfiguration it : adapterConfigForExpTypeList) {
 			if (it.getName().equalsIgnoreCase(annotatorNameLiteral.getString())) {
 				adapterConfigWithFittingAnnotatorName = it;
 				break;
@@ -70,12 +96,13 @@ public class GerbilSystemAdapter extends AbstractSystemAdapter {
 		}
 
 		if (adapterConfigWithFittingAnnotatorName == null) {
-			throw new Exception("Could'nt find a GERBIL QASystem annotator with name: |" + annotatorNameLiteral.getString() + "|");
+			throw new Exception("Could'nt find a GERBIL annotator with name: |" + annotatorNameLiteral.getString() + "|");
 		}
 		/**
 		 * Retrieve annotator.
 		 */
-		qasystem = (QASystem) adapterConfigWithFittingAnnotatorName.getAnnotator(ExperimentType.QA);
+
+		annotator = adapterConfigWithFittingAnnotatorName.getAnnotator(experimentType);
 
 	}
 
@@ -86,14 +113,59 @@ public class GerbilSystemAdapter extends AbstractSystemAdapter {
 	public void receiveGeneratedTask(String taskIdString, byte[] data) {
 		List<Document> documents = parser.parseNIF(RabbitMQUtils.readString(data));
 		try {
-			documents.get(0).setMarkings(qasystem.answerQuestion(documents.get(0)));
+			GerbilSystemAdapter.answerQuestion(annotator, documents.get(0), experimentType);
 			sendResultToEvalStorage(taskIdString, RabbitMQUtils.writeString(writer.writeNIF(documents)));
-		} catch (GerbilException e) {
-			LOGGER.error("QASystem " + qasystem.getName() + " wasn't able to answer a Question", e);
 		} catch (IOException e) {
 			LOGGER.error("Couldn't send data to EvalStorage", e);
 		} catch (NullPointerException e) {
 			LOGGER.error("Couldn't parse task or task was empty");
+		}catch(Exception e){
+		LOGGER.error("QASystem " + annotator.getName() + " wasn't able to answer a Question", e);
+		}
+	}
+
+	public static void answerQuestion(Annotator annotator,Document doc,ExperimentType experimentType) throws Exception {
+		switch (experimentType) {
+		case A2KB:
+			A2KBAnnotator a2kb=(A2KBAnnotator) annotator;
+			doc.setMarkings(new Vector<Marking>(a2kb.performA2KBTask(doc)));
+			break;
+		case C2KB:
+			C2KBAnnotator c2kb= (C2KBAnnotator) annotator;
+			doc.setMarkings(new Vector<Marking>(c2kb.performC2KB(doc)));
+			break;
+		case D2KB:
+			D2KBAnnotator d2kb= (D2KBAnnotator)annotator;
+			doc.setMarkings(new Vector<Marking>(d2kb.performD2KBTask(doc)));
+			break;
+		case ERec:
+			EntityRecognizer erec=(EntityRecognizer) annotator;
+			doc.setMarkings(new Vector<Marking>(erec.performRecognition(doc)));
+			break;
+		case ETyping:
+			EntityTyper etyp=(EntityTyper)annotator;
+			doc.setMarkings(new Vector<Marking>(etyp.performTyping(doc)));
+			break;
+		case OKE_Task1:
+			OKETask1Annotator oke1=(OKETask1Annotator) annotator;
+			doc.setMarkings(new Vector<Marking>(oke1.performTask1(doc)));
+			break;
+		case OKE_Task2:
+			OKETask2Annotator oke2= (OKETask2Annotator)annotator;
+			doc.setMarkings(new Vector<Marking>(oke2.performTask2(doc)));
+			break;
+		case QA:
+			QASystem qa= (QASystem) annotator;
+			doc.setMarkings(new Vector<Marking>(qa.answerQuestion(doc)));
+			break;
+			
+		case RE2KB: // Fall-through
+		case AIT2KB:
+		case AType:
+		case P2KB:
+		default:
+			throw new Exception("Experiment type "+experimentType.toString() + "is not supported");
+
 		}
 
 	}
@@ -101,7 +173,7 @@ public class GerbilSystemAdapter extends AbstractSystemAdapter {
 	@Override
 	public void close() throws IOException {
 
-		qasystem.close();
+		annotator.close();
 		super.close();
 	}
 
