@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 public class GerbilSystemAdapter extends AbstractSystemAdapter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(GerbilSystemAdapter.class);
 	public static final Property ANNOTATOR_NAME_PROPERTY = ResourceFactory.createProperty("http://w3id.org/gerbil/hobbit/vocab#annotatorName");
-	public static final Property ANNOTATOR_EXPERIMENT_TYPE_PROPERTY = ResourceFactory.createProperty("http://w3id.org/gerbil/hobbit/vocab#annotatorExperimentType");
+	public static final Property ANNOTATOR_EXPERIMENT_TYPE_PROPERTY = ResourceFactory.createProperty("http://w3id.org/gerbil/hobbit/vocab#applicableTo");
 
 	private Annotator annotator;
 	private ExperimentType experimentType;
