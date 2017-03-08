@@ -22,12 +22,12 @@
 			<artifactId>core</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
-		<!-- GERBIL QA Extension -->
-		<!-- See: https://github.com/AKSW/gerbil/tree/QuestionAnswering -->
+		<!-- GERBIL  -->
+		<!-- See: https://github.com/AKSW/gerbil/tree/version1.2.5-->
 		<dependency>
 			<groupId>org.aksw</groupId>
-			<artifactId>gerbil-qa</artifactId>
-			<version>0.1.0</version>
+			<artifactId>gerbil</artifactId>
+			<version>1.2.5-jena3.1</version>
 		</dependency>
 	</dependencies>
 	<build>

@@ -13,7 +13,6 @@ import org.aksw.gerbil.annotator.EntityRecognizer;
 import org.aksw.gerbil.annotator.EntityTyper;
 import org.aksw.gerbil.annotator.OKETask1Annotator;
 import org.aksw.gerbil.annotator.OKETask2Annotator;
-import org.aksw.gerbil.annotator.QASystem;
 import org.aksw.gerbil.datatypes.ExperimentType;
 import org.aksw.gerbil.io.nif.impl.TurtleNIFParser;
 import org.aksw.gerbil.io.nif.impl.TurtleNIFWriter;
@@ -36,7 +35,7 @@ import org.slf4j.LoggerFactory;
 public class GerbilSystemAdapter extends AbstractSystemAdapter {
 	private static final Logger LOGGER = LoggerFactory.getLogger(GerbilSystemAdapter.class);
 	public static final Property ANNOTATOR_NAME_PROPERTY = ResourceFactory.createProperty("http://w3id.org/gerbil/hobbit/vocab#annotatorName");
-	public static final Property ANNOTATOR_EXPERIMENT_TYPE_PROPERTY = ResourceFactory.createProperty("http://w3id.org/gerbil/hobbit/vocab#annotatorExperimentType");
+	public static final Property ANNOTATOR_EXPERIMENT_TYPE_PROPERTY = ResourceFactory.createProperty("http://w3id.org/gerbil/hobbit/vocab#applicableTo");
 
 	private Annotator annotator;
 	private ExperimentType experimentType;
@@ -154,15 +153,6 @@ public class GerbilSystemAdapter extends AbstractSystemAdapter {
 			OKETask2Annotator oke2= (OKETask2Annotator)annotator;
 			doc.setMarkings(new Vector<Marking>(oke2.performTask2(doc)));
 			break;
-		case QA:
-			QASystem qa= (QASystem) annotator;
-			doc.setMarkings(new Vector<Marking>(qa.answerQuestion(doc)));
-			break;
-			
-		case RE2KB: // Fall-through
-		case AIT2KB:
-		case AType:
-		case P2KB:
 		default:
 			throw new Exception("Experiment type "+experimentType.toString() + "is not supported");
 
