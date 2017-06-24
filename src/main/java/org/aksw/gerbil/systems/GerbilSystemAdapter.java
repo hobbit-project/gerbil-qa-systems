@@ -105,7 +105,7 @@ public class GerbilSystemAdapter extends AbstractSystemAdapter {
 		annotator = adapterConfigWithFittingAnnotatorName.getAnnotator(experimentType);
 
 	}
-
+	
 	public void receiveGeneratedData(byte[] arg0) {
 		// Nothing to handle here.
 	}
@@ -169,6 +169,10 @@ public class GerbilSystemAdapter extends AbstractSystemAdapter {
 		}
 
 	}
+	
+	public void setAnnotator(Annotator annotator) {
+        this.annotator = annotator;
+    }
 
 	@Override
 	public void close() throws IOException {
